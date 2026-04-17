@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GeoQuiz - Угадай столицу</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>GeoQuiz 🌍</h1>
+
+        <div class="stats">
+            <span class="correct">Верно: <span id="score-correct">0</span></span> | 
+            <span class="incorrect">Ошибок: <span id="score-incorrect">0</span></span>
+        </div>
+
+        <div class="card">
+            <img id="flag-image" src="https://flagcdn.com/w320/ru.png" alt="Флаг страны" width="320">
+            <h2 id="country-name">Россия</h2>
+
+            <input type="text" id="capital-input" placeholder="Введите столицу...">
+            <button id="submit-btn">Проверить</button>
+
+            <p id="result-message"></p>
+        </div>
+
+        <br>
+        <a href="reference.html">Перейти к справочнику стран</a>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
