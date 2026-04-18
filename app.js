@@ -18,7 +18,7 @@ async function fetchCountries() {
     try {
         resultMsg.textContent = 'Загрузка стран...';
         // Запрашиваем все страны на русском языке
-        const response = await fetch('https://restcountries.com/v3.1/all?fields=translations,capital,flags');
+        const response = await fetch('countries.json');
         const data = await response.json();
 
         // Фильтруем данные: оставляем только те страны, у которых есть столица
