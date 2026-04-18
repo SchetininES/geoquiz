@@ -4,19 +4,27 @@
     <meta charset="UTF-8">
     <title>Справочник стран</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Расширим контейнер для справочника */
+        .game-container { max-width: 800px; }
+    </style>
 </head>
 <body>
     <div class="game-container">
         <div class="card">
             <h1>Справочник стран 📚</h1>
-            <p>🇷🇺 Россия - Москва</p>
-            <p>🇯🇵 Япония - Токио</p>
-            <p>🇧🇷 Бразилия - Бразилиа</p>
-            <p>🇫🇷 Франция - Париж</p>
-            <p>🇪🇬 Египет - Каир</p>
-            <br>
-            <a href="index.html">⬅ Вернуться к игре</a>
+
+            <a href="index.html" style="display: block; margin-bottom: 20px;">⬅ Вернуться к игре</a>
+
+            <!-- Сюда наш app.js вставит все 250 стран! -->
+            <div id="reference-list" style="max-height: 600px; overflow-y: auto;">
+                <p>Загрузка справочника...</p>
+            </div>
+
         </div>
     </div>
+
+    <!-- Подключаем наш скрипт -->
+    <script src="app.js"></script>
 </body>
 </html>

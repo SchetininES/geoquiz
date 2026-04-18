@@ -13,59 +13,73 @@ const resultMsg = document.getElementById('result-message');
 const scoreCorrectEl = document.getElementById('score-correct');
 const scoreIncorrectEl = document.getElementById('score-incorrect');
 
-// Функция загрузки данных из публичного API
+// Ссылка на стабильный репозиторий с флагами (не заблокирован)
+const flagBaseUrl = "https://raw.githubusercontent.com/lipis/flag-icons/main/flags/4x3/";
+
 async function fetchCountries() {
     try {
         resultMsg.textContent = 'Загрузка стран...';
-        // Запрашиваем все страны на русском языке
+        // Грузим локальный файл со списком стран
         const response = await fetch('countries.json');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        // Фильтруем данные: оставляем только те страны, у которых есть столица
+        // Формируем новый, чистый массив
         countries = data
-            .filter(country => country.capital && country.capital.length > 0)
-            .map(country => ({
-                name: country.translations.rus ? country.translations.rus.common : "Неизвестная страна", // Берем название на русском
-                capital: country.capital[0], // Столица (в API это массив, берем первую)
-                flag: country.flags.png // Ссылка на картинку флага
-            }));
+            .filter(country => country.capital && country.capital.length > 0 && country.cca2)
+            .map(country => {
+                const rusName = country.translations && country.translations.rus ? country.translations.rus.common : null;
+                const engName = country.name ? country.name.common : "Неизвестная страна";
+                // Генерируем ссылку на флаг из двухбуквенного кода страны
+                const flagUrl = `${flagBaseUrl}${country.cca2.toLowerCase()}.svg`;
 
-        resultMsg.textContent = ''; // Убираем надпись "Загрузка..."
-        loadRandomCountry(); // Запускаем игру
+                return {
+                    name: rusName || engName,
+                    capital: country.capital[0],
+                    flag: flagUrl
+                };
+            });
+
+        if (countries.length === 0) {
+            throw new Error("Массив стран пуст после фильтрации.");
+        }
+
+        resultMsg.textContent = ''; 
+
+        // Экспортируем данные для справочника (если он открыт)
+        if (window.location.pathname.includes('reference.html')) {
+            renderReference();
+        } else {
+            loadRandomCountry();
+        }
+
     } catch (error) {
-        console.error("Ошибка при загрузке стран:", error);
+        console.error("Детали ошибки:", error);
         resultMsg.textContent = 'Ошибка загрузки базы стран!';
         resultMsg.style.color = 'red';
     }
 }
 
-// Функция загрузки случайной страны
 function loadRandomCountry() {
-    if (countries.length === 0) return;
-
+    if (countries.length === 0 || !flagImg) return;
     currentCountryIndex = Math.floor(Math.random() * countries.length);
     const country = countries[currentCountryIndex];
 
     flagImg.src = country.flag;
     countryNameEl.textContent = country.name;
-    capitalInput.value = ''; // Очищаем поле ввода
-    resultMsg.textContent = ''; // Очищаем сообщение
-
-    // Фокус на поле ввода (для удобства пользователя)
+    capitalInput.value = ''; 
+    resultMsg.textContent = ''; 
     capitalInput.focus();
 }
 
-// Функция проверки ответа
 function checkAnswer() {
     if (countries.length === 0) return;
-
-    // Убираем пробелы, переводим в нижний регистр и заменяем "ё" на "е" для гибкости
     const userAnswer = capitalInput.value.trim().toLowerCase().replace(/ё/g, 'е');
     const correctAnswer = countries[currentCountryIndex].capital.toLowerCase().replace(/ё/g, 'е');
-
-    // Поскольку в API столицы на английском (Moscow, Tokyo), нам нужно разрешить ввод на английском. 
-    // Если хочешь столицы на русском - потребуется другой источник данных или сложный маппинг.
-    // Для нашего примера оставим сравнение с оригинальным ответом API (на английском).
 
     if (userAnswer === correctAnswer) {
         correctAnswers++;
@@ -81,15 +95,34 @@ function checkAnswer() {
     }
 }
 
-// Слушатель на кнопку
-submitBtn.addEventListener('click', checkAnswer);
+// Функция отрисовки справочника (вызывается только на странице справочника)
+function renderReference() {
+    const refContainer = document.getElementById('reference-list');
+    if (!refContainer) return;
 
-// Слушатель на клавишу Enter в поле ввода (удобство!)
-capitalInput.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        checkAnswer();
-    }
-});
+    // Сортируем страны по алфавиту для красоты
+    countries.sort((a, b) => a.name.localeCompare(b.name));
 
-// Запуск приложения: начинаем с загрузки данных
+    let html = '';
+    countries.forEach(country => {
+        html += `
+            <div style="display: flex; align-items: center; justify-content: start; margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #eee;">
+                <img src="${country.flag}" alt="${country.name}" style="width: 40px; margin-right: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                <span style="font-size: 18px; font-weight: bold; width: 250px; text-align: left;">${country.name}</span>
+                <span style="font-size: 16px; color: #555;">${country.capital}</span>
+            </div>
+        `;
+    });
+    refContainer.innerHTML = html;
+}
+
+// Подключаем слушатели только если элементы существуют (в игре)
+if (submitBtn) {
+    submitBtn.addEventListener('click', checkAnswer);
+    capitalInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') checkAnswer();
+    });
+}
+
+// Стартуем
 fetchCountries();
