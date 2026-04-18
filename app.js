@@ -1,13 +1,5 @@
-// База данных стран (для начала возьмем 5 штук)
-const countries = [
-    { name: "Россия", capital: "Москва", flag: "https://flagcdn.com/w320/ru.png" },
-    { name: "Япония", capital: "Токио", flag: "https://flagcdn.com/w320/jp.png" },
-    { name: "Бразилия", capital: "Бразилиа", flag: "https://flagcdn.com/w320/br.png" },
-    { name: "Франция", capital: "Париж", flag: "https://flagcdn.com/w320/fr.png" },
-    { name: "Египет", capital: "Каир", flag: "https://flagcdn.com/w320/eg.png" }
-];
-
 // Переменные состояния
+let countries = [];
 let currentCountryIndex = 0;
 let correctAnswers = 0;
 let incorrectAnswers = 0;
@@ -21,8 +13,36 @@ const resultMsg = document.getElementById('result-message');
 const scoreCorrectEl = document.getElementById('score-correct');
 const scoreIncorrectEl = document.getElementById('score-incorrect');
 
+// Функция загрузки данных из публичного API
+async function fetchCountries() {
+    try {
+        resultMsg.textContent = 'Загрузка стран...';
+        // Запрашиваем все страны на русском языке
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=translations,capital,flags');
+        const data = await response.json();
+
+        // Фильтруем данные: оставляем только те страны, у которых есть столица
+        countries = data
+            .filter(country => country.capital && country.capital.length > 0)
+            .map(country => ({
+                name: country.translations.rus ? country.translations.rus.common : "Неизвестная страна", // Берем название на русском
+                capital: country.capital[0], // Столица (в API это массив, берем первую)
+                flag: country.flags.png // Ссылка на картинку флага
+            }));
+
+        resultMsg.textContent = ''; // Убираем надпись "Загрузка..."
+        loadRandomCountry(); // Запускаем игру
+    } catch (error) {
+        console.error("Ошибка при загрузке стран:", error);
+        resultMsg.textContent = 'Ошибка загрузки базы стран!';
+        resultMsg.style.color = 'red';
+    }
+}
+
 // Функция загрузки случайной страны
 function loadRandomCountry() {
+    if (countries.length === 0) return;
+
     currentCountryIndex = Math.floor(Math.random() * countries.length);
     const country = countries[currentCountryIndex];
 
@@ -30,19 +50,29 @@ function loadRandomCountry() {
     countryNameEl.textContent = country.name;
     capitalInput.value = ''; // Очищаем поле ввода
     resultMsg.textContent = ''; // Очищаем сообщение
+
+    // Фокус на поле ввода (для удобства пользователя)
+    capitalInput.focus();
 }
 
 // Функция проверки ответа
 function checkAnswer() {
-    const userAnswer = capitalInput.value.trim().toLowerCase();
-    const correctAnswer = countries[currentCountryIndex].capital.toLowerCase();
+    if (countries.length === 0) return;
+
+    // Убираем пробелы, переводим в нижний регистр и заменяем "ё" на "е" для гибкости
+    const userAnswer = capitalInput.value.trim().toLowerCase().replace(/ё/g, 'е');
+    const correctAnswer = countries[currentCountryIndex].capital.toLowerCase().replace(/ё/g, 'е');
+
+    // Поскольку в API столицы на английском (Moscow, Tokyo), нам нужно разрешить ввод на английском. 
+    // Если хочешь столицы на русском - потребуется другой источник данных или сложный маппинг.
+    // Для нашего примера оставим сравнение с оригинальным ответом API (на английском).
 
     if (userAnswer === correctAnswer) {
         correctAnswers++;
         scoreCorrectEl.textContent = correctAnswers;
         resultMsg.textContent = 'Верно! 🎉';
         resultMsg.style.color = 'green';
-        setTimeout(loadRandomCountry, 1500); // Загружаем новую страну через 1.5 секунды
+        setTimeout(loadRandomCountry, 1500); 
     } else {
         incorrectAnswers++;
         scoreIncorrectEl.textContent = incorrectAnswers;
@@ -51,8 +81,15 @@ function checkAnswer() {
     }
 }
 
-// Вешаем слушатель на кнопку
+// Слушатель на кнопку
 submitBtn.addEventListener('click', checkAnswer);
 
-// Запуск игры при загрузке страницы
-loadRandomCountry();
+// Слушатель на клавишу Enter в поле ввода (удобство!)
+capitalInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+        checkAnswer();
+    }
+});
+
+// Запуск приложения: начинаем с загрузки данных
+fetchCountries();
