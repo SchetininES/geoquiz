@@ -1,10 +1,9 @@
-// Переменные состояния
+// Переменные
 let countries = [];
 let currentCountryIndex = 0;
 let correctAnswers = 0;
 let incorrectAnswers = 0;
 
-// Привязка к HTML элементам
 const flagImg = document.getElementById('flag-image');
 const countryNameEl = document.getElementById('country-name');
 const capitalInput = document.getElementById('capital-input');
@@ -13,54 +12,49 @@ const resultMsg = document.getElementById('result-message');
 const scoreCorrectEl = document.getElementById('score-correct');
 const scoreIncorrectEl = document.getElementById('score-incorrect');
 
-// Ссылка на стабильный репозиторий с флагами (не заблокирован)
+// Ссылка на флаги (стабильная)
 const flagBaseUrl = "https://raw.githubusercontent.com/lipis/flag-icons/main/flags/4x3/";
 
 async function fetchCountries() {
     try {
-        resultMsg.textContent = 'Загрузка стран...';
-        // Грузим локальный файл со списком стран
-        const response = await fetch('countries.json');
+        if (resultMsg) resultMsg.textContent = 'Загрузка данных...';
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Загружаем нашу НОВУЮ, полностью русскую базу
+        const response = await fetch('ru_countries.json');
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
 
-        // Формируем новый, чистый массив
-        countries = data
-            .filter(country => country.capital && country.capital.length > 0 && country.cca2)
-            .map(country => {
-                const rusName = country.translations && country.translations.rus ? country.translations.rus.common : null;
-                const engName = country.name ? country.name.common : "Неизвестная страна";
-                // Генерируем ссылку на флаг из двухбуквенного кода страны
-                const flagUrl = `${flagBaseUrl}${country.cca2.toLowerCase()}.svg`;
+        // Преобразуем данные из нового JSON
+        // Формат там: { "RU": { "name": "Россия", "capital": "Москва", ... } }
+        countries = Object.keys(data).map(code => {
+            const country = data[code];
+            return {
+                name: country.name,
+                capital: country.capital,
+                // Код страны (code) берем в нижнем регистре для флага
+                flag: `${flagBaseUrl}${code.toLowerCase()}.svg`
+            };
+        }).filter(c => c.capital && c.name); // Оставляем только те, где есть и столица, и название
 
-                return {
-                    name: rusName || engName,
-                    capital: country.capital[0],
-                    flag: flagUrl
-                };
-            });
+        if (resultMsg) resultMsg.textContent = ''; 
 
-        if (countries.length === 0) {
-            throw new Error("Массив стран пуст после фильтрации.");
-        }
+        // ОПРЕДЕЛЯЕМ, ГДЕ МЫ НАХОДИМСЯ
+        const isReferencePage = document.getElementById('reference-list') !== null;
 
-        resultMsg.textContent = ''; 
-
-        // Экспортируем данные для справочника (если он открыт)
-        if (window.location.pathname.includes('reference.html')) {
+        if (isReferencePage) {
             renderReference();
         } else {
             loadRandomCountry();
         }
 
     } catch (error) {
-        console.error("Детали ошибки:", error);
-        resultMsg.textContent = 'Ошибка загрузки базы стран!';
-        resultMsg.style.color = 'red';
+        console.error("Ошибка:", error);
+        if (resultMsg) {
+            resultMsg.textContent = 'Ошибка загрузки базы стран!';
+            resultMsg.style.color = 'red';
+        }
     }
 }
 
@@ -73,6 +67,9 @@ function loadRandomCountry() {
     countryNameEl.textContent = country.name;
     capitalInput.value = ''; 
     resultMsg.textContent = ''; 
+
+    // Подсказка на русском
+    capitalInput.placeholder = "Введите столицу (на русском)...";
     capitalInput.focus();
 }
 
@@ -95,28 +92,31 @@ function checkAnswer() {
     }
 }
 
-// Функция отрисовки справочника (вызывается только на странице справочника)
+// Рендер справочника (теперь точно сработает!)
 function renderReference() {
     const refContainer = document.getElementById('reference-list');
     if (!refContainer) return;
 
-    // Сортируем страны по алфавиту для красоты
+    // Сортируем по алфавиту
     countries.sort((a, b) => a.name.localeCompare(b.name));
 
     let html = '';
     countries.forEach(country => {
         html += `
-            <div style="display: flex; align-items: center; justify-content: start; margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #eee;">
-                <img src="${country.flag}" alt="${country.name}" style="width: 40px; margin-right: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
-                <span style="font-size: 18px; font-weight: bold; width: 250px; text-align: left;">${country.name}</span>
-                <span style="font-size: 16px; color: #555;">${country.capital}</span>
+            <div class="ref-item" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                <div style="display: flex; align-items: center; width: 60%;">
+                    <img src="${country.flag}" alt="${country.name}" style="width: 50px; margin-right: 15px; border-radius: 4px; border: 1px solid #ccc;">
+                    <span style="font-size: 18px; font-weight: bold; text-align: left;">${country.name}</span>
+                </div>
+                <div style="width: 40%; text-align: right;">
+                    <span style="font-size: 16px; color: #d32f2f; font-weight: bold;">${country.capital}</span>
+                </div>
             </div>
         `;
     });
     refContainer.innerHTML = html;
 }
 
-// Подключаем слушатели только если элементы существуют (в игре)
 if (submitBtn) {
     submitBtn.addEventListener('click', checkAnswer);
     capitalInput.addEventListener('keypress', function (e) {
@@ -124,5 +124,4 @@ if (submitBtn) {
     });
 }
 
-// Стартуем
 fetchCountries();
