@@ -7,3 +7,49 @@ button:hover { background: #0056b3; }
 .stats { margin-bottom: 20px; font-size: 18px; font-weight: bold; }
 .correct { color: green; }
 .incorrect { color: red; }
+/* =========================================
+   МОБИЛЬНАЯ ОПТИМИЗАЦИЯ (Responsive Design)
+   ========================================= */
+
+/* Эти правила сработают только если ширина экрана 600px или меньше */
+@media (max-width: 600px) {
+    /* Уменьшаем отступы по краям экрана */
+    body { padding: 10px; }
+
+    /* Делаем карточку игры тоньше, чтобы она влезала в экран */
+    .card { padding: 15px; }
+
+    /* Уменьшаем размер заголовков */
+    h1 { font-size: 22px; margin-bottom: 15px; }
+
+    /* Флаг в игре не должен вылезать за края */
+    #flag-image { width: 100%; max-width: 250px; height: auto; }
+
+    /* Поле ввода растягиваем почти на всю ширину телефона */
+    input { width: 90%; font-size: 16px; padding: 10px; }
+
+    /* Кнопка на всю ширину (удобно нажимать пальцем) */
+    button { width: 95%; padding: 12px; font-size: 16px; }
+
+    /* --- СТИЛИ ДЛЯ СПРАВОЧНИКА НА ТЕЛЕФОНЕ --- */
+
+    /* Элемент справочника (строка со страной) */
+    .ref-item { 
+        flex-direction: column; /* Элементы друг под другом */
+        align-items: flex-start !important; /* Прижимаем к левому краю */
+        padding: 10px;
+    }
+
+    /* Блок с флагом и названием страны */
+    .ref-item > div:first-child { 
+        width: 100% !important; 
+        margin-bottom: 5px; 
+    }
+
+    /* Блок со столицей */
+    .ref-item > div:last-child { 
+        width: 100% !important; 
+        text-align: left !important; /* Текст слева, а не справа */
+        padding-left: 65px; /* Отступ, чтобы выровнять по тексту страны */
+    }
+}
